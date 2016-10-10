@@ -1,0 +1,30 @@
+html
+{
+  margin: 10px;
+}
+
+div.container
+{
+  margin: 0 auto;
+  width: 80%;
+}
+
+.badge.pstatus
+{
+  width: 100px;
+}
+
+.badge.done
+{
+  background-color: #4CAF50;
+}
+
+div#status, div#showInfo
+{
+  display: none;
+}
+
+span.filesize
+{
+  float: right;
+}
