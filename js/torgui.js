@@ -28,6 +28,10 @@ function parseData(data)
   $('#showThumb').attr('src', data['meta']['image']['original']);
   $('#showInfo .col-lg-3 .caption h3').text(data['meta']['keyword'])
 
+  if (!data['1080p']) data['1080p'] = [];
+  if (!data['720p']) data['720p'] = [];
+  if (!data['sd']) data['sd'] = [];
+
   var arrayLengths = [data['1080p'].length, data['720p'].length, data['sd'].length]
   var maxNum = Math.max(...arrayLengths)
 
