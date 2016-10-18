@@ -28,3 +28,8 @@ span.filesize
 {
   float: right;
 }
+
+div#welcomeMessage
+{
+  display: none;
+}

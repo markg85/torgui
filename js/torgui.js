@@ -1,3 +1,28 @@
+var showWelcome = true
+
+function setWelcomeVisible(value)
+{
+  // No local storage.
+  if (typeof(Storage) == "undefined")
+  {
+    return;
+  }
+
+  localStorage.welcomeMessageVisible = value;
+}
+
+function welcomVisible()
+{
+  if (localStorage && localStorage.welcomeMessageVisible)
+  {
+    return localStorage.welcomeMessageVisible;
+  }
+  else
+  {
+    return true;
+  }
+}
+
 function parseData(data)
 {
   $('#showThumb').attr('src', data['meta']['image']['original']);
@@ -100,6 +125,14 @@ function sendSearchRequest()
 }
 
 $( document ).ready(function() {
+
+  console.log(localStorage.welcomeMessageVisible)
+
+  $("#welcomeMessage").css("display", ((welcomVisible() == true) ? "block": "none"))
+  $("#welcomeMessage > button").click(function(){
+    setWelcomeVisible(!welcomVisible())
+  });
+
   $('#searchfieldSubmit').click(function() {
     sendSearchRequest();
   });
