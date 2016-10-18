@@ -93,10 +93,10 @@ function parseData(data)
   // Clear the search field since we have our results now.
   $('#searchfield').val("");
 
-  // Remove status done classes.
-  $("sendRequestStatus span").removeClass("done")
-  $("#responseStatus span").removeClass("done")
-  $("#parsingStatus span").removeClass("done")
+  // Reset the status lines (remove done class and set the text back to pending).
+  $("sendRequestStatus span").removeClass("done").text("pending")
+  $("#responseStatus span").removeClass("done").text("pending")
+  $("#parsingStatus span").removeClass("done").text("pending")
 }
 
 
