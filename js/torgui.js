@@ -26,7 +26,7 @@ function welcomVisible()
 function parseData(data)
 {
   $('#showThumb').attr('src', data['meta']['image']['original']);
-  $('#showInfo .col-lg-3 .caption h3').text(data['meta']['name'])
+  $('#showInfo .col-lg-3 .caption h3').text(data['meta']['name'] + " " + data['meta']['episode'])
 
   if (!data['1080p']) data['1080p'] = [];
   if (!data['720p']) data['720p'] = [];
