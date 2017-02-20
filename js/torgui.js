@@ -26,7 +26,7 @@ function welcomVisible()
 function parseData(data)
 {
   $('#showThumb').attr('src', data['meta']['image']['original']);
-  $('#showInfo .col-lg-3 .caption h3').text(data['meta']['keyword'])
+  $('#showInfo .col-lg-3 .caption h3').text(data['meta']['name'])
 
   if (!data['1080p']) data['1080p'] = [];
   if (!data['720p']) data['720p'] = [];
@@ -90,7 +90,8 @@ function parseData(data)
   $("#status").fadeOut()
   $("#showInfo").fadeIn()
 
-  // Clear the search field since we have our results now.
+  // Store the last search query and clear the input field.
+  lastSearchQuery = data['meta']['name'];
   $('#searchfield').val("");
 
   // Reset the status lines (remove done class and set the text back to pending).
@@ -99,11 +100,11 @@ function parseData(data)
   $("#parsingStatus span").removeClass("done").text("pending")
 }
 
+var lastSearchQuery = "";
 
-function sendSearchRequest()
+function sendSearchRequest(query)
 {
-  var searchQuery = $('#searchfield').val();
-
+  var searchQuery = query;
   if (searchQuery == "")
   {
     alert("Empty query. Not doing anything.")
@@ -132,19 +133,25 @@ $( document ).ready(function() {
 
   console.log(localStorage.welcomeMessageVisible)
 
+  $('[data-toggle="tooltip"]').tooltip();
+
   $("#welcomeMessage").css("display", ((welcomVisible() == true) ? "block": "none"))
   $("#welcomeMessage > button").click(function(){
     setWelcomeVisible(!welcomVisible())
   });
 
-  $('#searchfieldSubmit').click(function() {
-    sendSearchRequest();
+ $('#searchfieldRefresh').click(function() {
+    sendSearchRequest(lastSearchQuery);
+  });
+
+ $('#searchfieldSubmit').click(function() {
+    sendSearchRequest($('#searchfield').val());
   });
 
   $('#searchfield').keypress(function (e) {
     if(e.which == 13)  // the enter key code
     {
-      sendSearchRequest();
+      sendSearchRequest($('#searchfield').val());
       return false;
     }
   });
