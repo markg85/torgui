@@ -30,10 +30,16 @@ function parseData(data)
   var image = ""
 
   if (data['meta'].image) {
-    title = data['meta']['name'] + " S" + data['meta']['season'] + "E" + data['meta']['episode']
     image = data['meta']['image']
+    title = data['meta']['name']
   }
-  
+
+  // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
+  // But we don't have it for movies.
+  if (data['meta'].season) {
+    title += " S" + data['meta']['season'] + "E" + data['meta']['episode']
+  }
+ 
   $('#showThumb').attr('src', image);
   $('#showInfo .col-lg-3 .caption h3').text(title)
 
@@ -96,7 +102,7 @@ function sendSearchRequest(query)
   // Adjust search query to be more generic.
   // If it starts with "!" or "tt" then we pass it as is.
   // If not (this if body) then prefix it with "latest:"
-  if (!searchQuery.startsWith("!") && !searchQuery.startsWith("tt") && !searchQuery.startsWith("imdb:"))
+  if (!searchQuery.startsWith("!") && !searchQuery.startsWith("tt") && !searchQuery.startsWith("imdb:") && !searchQuery.startsWith("latest:"))
   {
     searchQuery = "latest:" + searchQuery
   }
