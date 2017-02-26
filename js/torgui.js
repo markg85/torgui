@@ -1,7 +1,6 @@
 var showWelcome = true
 
 var version = "0.1.0"
-localStorage.clear();
 
 function fillInitialLocalStorage() {
   if (!localStorage.welcomeMessageVersion) {
