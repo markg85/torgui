@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>TorGui 0.0.2</title>
+    <title>TorGui 0.1.0</title>
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/bootstrap-theme.min.css" rel="stylesheet">
@@ -13,11 +13,14 @@
       <div id="welcomeMessage" class="alert alert-info alert-dismissible" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         <b>Welcome!</b> <br />
-        This is "TorGui", a graphical frontend for my Tor project.<br />
-        <br />
-        You can simply type the name of a series below and it will search for the latest episodes in that series (it uses the TVMaze API for that). <br />
-        The result will then be displayed in a nice overview.
-        <br />
+        New in version 0.1.0.<br />
+        <ul>
+          <li>[EXPERIMENTAL] You can now search for imdb id's (must begin with tt followed by a 7 digit number.</li>
+          <li>[EXPERIMENTAL] You can do exact searches. Just prefix your search with an "!" then the search will be passed as you typed it. For the moment, this does break the result information (no image and description).</li>
+          <li>Fixed cases where your previous results would still be visible for a moment. This now uses HTML Template logic, it should work on modern browsers except for IE11. </li>
+          <li>Ability to chow a changelog to you when the version changes.</li>
+          <li>Various minor fixes through the codebase.</li>
+        </ul>
         <br />
         Everything you see here is available on github if you want to run your own instance or want to contibute.
         <ul>
@@ -33,7 +36,7 @@
                 <button class="btn btn-default" type="button" id="searchfieldSubmit">Search</button>
                 <button class="btn btn-default" type="button" id="searchfieldRefresh" data-toggle="tooltip" title="Refresh last search result"><span class="glyphicon glyphicon-refresh"></span></button>
               </span>
-            </div><!-- /input-group -->
+            </div>
           </div>
       </div>
       <div class="row" id="status">
@@ -75,12 +78,6 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th scope="row">1</th>
-                <td>STUB</td>
-                <td>STUB</td>
-                <td>STUB</td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -91,6 +88,15 @@
     <script src="http://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/torgui.js"></script>
+
+    <template id="torrentEntry">
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
 
   </body>
 </html>

@@ -1,32 +1,42 @@
 var showWelcome = true
 
-function setWelcomeVisible(value)
-{
-  // No local storage.
-  if (typeof(Storage) == "undefined")
-  {
-    return;
-  }
+var version = "0.1.0"
+localStorage.clear();
 
-  localStorage.welcomeMessageVisible = value;
+function fillInitialLocalStorage() {
+  if (!localStorage.welcomeMessageVersion) {
+    localStorage.welcomeMessageVersion = "0.0.0"
+  }
 }
 
-function welcomVisible()
-{
-  if (localStorage && localStorage.welcomeMessageVisible)
-  {
-    return localStorage.welcomeMessageVisible;
+function welcomeMessageVersion() {
+  if (localStorage && localStorage.welcomeMessageVersion) {
+    localStorage.welcomeMessageVersion = version;
+    return localStorage.welcomeMessageVersion;
+  } else {
+    return version;
   }
-  else
-  {
-    return true;
+}
+
+function isWelcomeMessageVersionRead() {
+  if (localStorage.welcomeMessageVersion < version) {
+    return false;
   }
+  return true;
 }
 
 function parseData(data)
 {
-  $('#showThumb').attr('src', data['meta']['image']['original']);
-  $('#showInfo .col-lg-3 .caption h3').text(data['meta']['name'] + " " + data['meta']['episode'])
+  var title = ""
+  var image = ""
+
+  if (data['meta'].image) {
+    title = data['meta']['name'] + " S" + data['meta']['season'] + "E" + data['meta']['episode']
+    image = data['meta']['image']
+  }
+  
+  $('#showThumb').attr('src', image);
+  $('#showInfo .col-lg-3 .caption h3').text(title)
 
   if (!data['1080p']) data['1080p'] = [];
   if (!data['720p']) data['720p'] = [];
@@ -35,56 +45,29 @@ function parseData(data)
   var arrayLengths = [data['1080p'].length, data['720p'].length, data['sd'].length]
   var maxNum = Math.max(...arrayLengths)
 
-  // Get the last child
-  var lastChild = $('#episodeLinks > tbody tr:last-child').clone();
+  var rowTemplate = document.getElementById('torrentEntry');
+  var bodyForRows = document.getElementById('episodeLinks').getElementsByTagName('tbody')[0];
 
-  // Clear the table
-  $('#episodeLinks > tbody').empty();
+  var keys = ['1080p', '720p', 'sd']
 
-  lastChild.children().each(function(i)
-  {
-    $(this).text("");
-  });
+  for (var i = 0; i < maxNum; i++) {
+    var td = rowTemplate.content.querySelectorAll("td");
+   
+    td[0].textContent = (i + 1);
 
-  // Fill it with new - empty - entries
-  for (var i = 1; i <= maxNum; i++)
-  {
-    var row = lastChild.clone()
-    $(row.children()[0]).text(i);
-    $('#episodeLinks > tbody:last-child').append(row);
+    for (var col = 1; col < 4; col++) {
+      var item = data[keys[col - 1]][i]
+
+      if (item) {
+        td[col].innerHTML = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`;
+      } else {
+        td[col].textContent = ``;
+      }
+    }
+
+    var clone = document.importNode(rowTemplate.content, true);
+    bodyForRows.appendChild(clone);
   }
-
-  var index = 1
-
-  for (var item of data['1080p'])
-  {
-    var link = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`
-    var child = $('#episodeLinks > tbody tr:nth-child('+index+')').children()[1]
-    $(child).html(link);
-    index++;
-  }
-
-  index = 1
-
-  for (var item of data['720p'])
-  {
-    var link = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`
-    var child = $('#episodeLinks > tbody tr:nth-child('+index+')').children()[2]
-    $(child).html(link);
-    index++;
-  }
-
-  index = 1
-
-  for (var item of data['sd'])
-  {
-    var link = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`
-    var child = $('#episodeLinks > tbody tr:nth-child('+index+')').children()[3]
-    $(child).html(link);
-    index++;
-  }
-
-  index = 1
 
   $("#parsingStatus span").addClass("done").text("done");
   $("#status").fadeOut()
@@ -104,18 +87,34 @@ var lastSearchQuery = "";
 
 function sendSearchRequest(query)
 {
-  var searchQuery = query;
+  var searchQuery = query.trim();
   if (searchQuery == "")
   {
     alert("Empty query. Not doing anything.")
     return;
   }
 
+  // Adjust search query to be more generic.
+  // If it starts with "!" or "tt" then we pass it as is.
+  // If not (this if body) then prefix it with "latest:"
+  if (!searchQuery.startsWith("!") && !searchQuery.startsWith("tt") && !searchQuery.startsWith("imdb:"))
+  {
+    searchQuery = "latest:" + searchQuery
+  }
+
   $("#status").fadeIn()
   $("#showInfo").fadeOut()
 
-//  $.ajax( "http://localhost:3020/search/latest:" + searchQuery )
-  $.ajax( "http://tor.sc2.nl/search/latest:" + searchQuery )
+  // Clear item information
+  $('#showThumb').attr('src', "");
+  $('#showInfo .col-lg-3 .caption h3').text("")
+
+  // Clear all table rows
+  $('#episodeLinks > tbody tr').remove();
+
+  console.log(searchQuery)
+//  $.ajax( "http://localhost:3020/search/" + searchQuery )
+  $.ajax( "http://tor.sc2.nl/search/" + searchQuery )
     .done(function(data) {
       //alert( "success" + data );
       console.log(data)
@@ -131,13 +130,14 @@ function sendSearchRequest(query)
 
 $( document ).ready(function() {
 
-  console.log(localStorage.welcomeMessageVisible)
+  fillInitialLocalStorage();
+  console.log(localStorage.welcomeMessageVersion)
 
   $('[data-toggle="tooltip"]').tooltip();
 
-  $("#welcomeMessage").css("display", ((welcomVisible() == true) ? "block": "none"))
+  $("#welcomeMessage").css("display", ((isWelcomeMessageVersionRead() == false) ? "block": "none"))
   $("#welcomeMessage > button").click(function(){
-    setWelcomeVisible(!welcomVisible())
+    welcomeMessageVersion();
   });
 
  $('#searchfieldRefresh').click(function() {
