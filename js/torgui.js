@@ -107,6 +107,11 @@ function sendSearchRequest(query)
     searchQuery = "latest:" + searchQuery
   }
 
+  if (searchQuery.startsWith("!"))
+  {
+    searchQuery = searchQuery.substr(1);
+  }
+
   $("#status").fadeIn()
   $("#showInfo").fadeOut()
 
