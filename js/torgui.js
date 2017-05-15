@@ -29,59 +29,62 @@ function parseData(data)
   var title = ""
   var image = ""
 
-  if (data['meta'].image) {
-    image = data['meta']['image']
-    title = data['meta']['name']
-  }
-
-  // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
-  // But we don't have it for movies.
-  if (data['meta'].season) {
-    title += " S" + data['meta']['season'] + "E" + data['meta']['episode']
-  }
- 
-  $('#showThumb').attr('src', image);
-  $('#showInfo .col-lg-3 .caption h3').text(title)
-
-  if (!data['1080p']) data['1080p'] = [];
-  if (!data['720p']) data['720p'] = [];
-  if (!data['sd']) data['sd'] = [];
-
-  var arrayLengths = [data['1080p'].length, data['720p'].length, data['sd'].length]
-  var maxNum = Math.max(...arrayLengths)
-
-  var rowTemplate = document.getElementById('torrentEntry');
-  var bodyForRows = document.getElementById('episodeLinks').getElementsByTagName('tbody')[0];
-
-  var keys = ['1080p', '720p', 'sd']
-
-  for (var i = 0; i < maxNum; i++) {
-    var td = rowTemplate.content.querySelectorAll("td");
-   
-    td[0].textContent = (i + 1);
-
-    for (var col = 1; col < 4; col++) {
-      var item = data[keys[col - 1]][i]
-
-      if (item) {
-        td[col].innerHTML = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`;
-      } else {
-        td[col].textContent = ``;
-      }
+  if (!data.error) {
+    if (data['meta'].image) {
+      image = data['meta']['image']
+      title = data['meta']['name']
+    }
+    // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
+    // But we don't have it for movies.
+    else if (data['meta'].season) {
+      title += " S" + data['meta']['season'] + "E" + data['meta']['episode']
     }
 
-    var clone = document.importNode(rowTemplate.content, true);
-    bodyForRows.appendChild(clone);
-  }
+    // Store the last search query and clear the input field.
+    lastSearchQuery = data['meta']['name'];
+    $('#searchfield').val("");
 
+
+    $('#showThumb').attr('src', image);
+    $('#showInfo .col-lg-3 .caption h3').text(title)
+
+    if (!data['1080p']) data['1080p'] = [];
+    if (!data['720p']) data['720p'] = [];
+    if (!data['sd']) data['sd'] = [];
+
+    var arrayLengths = [data['1080p'].length, data['720p'].length, data['sd'].length]
+    var maxNum = Math.max(...arrayLengths)
+
+    var rowTemplate = document.getElementById('torrentEntry');
+    var bodyForRows = document.getElementById('episodeLinks').getElementsByTagName('tbody')[0];
+
+    var keys = ['1080p', '720p', 'sd']
+
+    for (var i = 0; i < maxNum; i++) {
+      var td = rowTemplate.content.querySelectorAll("td");
+
+      td[0].textContent = (i + 1);
+
+      for (var col = 1; col < 4; col++) {
+        var item = data[keys[col - 1]][i]
+
+        if (item) {
+          td[col].innerHTML = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`;
+        } else {
+          td[col].textContent = ``;
+        }
+      }
+
+      var clone = document.importNode(rowTemplate.content, true);
+      bodyForRows.appendChild(clone);
+    }
+
+    $("#showInfo").fadeIn()
+  }
+  
   $("#parsingStatus span").addClass("done").text("done");
   $("#status").fadeOut()
-  $("#showInfo").fadeIn()
-
-  // Store the last search query and clear the input field.
-  lastSearchQuery = data['meta']['name'];
-  $('#searchfield').val("");
-
+ 
   // Reset the status lines (remove done class and set the text back to pending).
   $("sendRequestStatus span").removeClass("done").text("pending")
   $("#responseStatus span").removeClass("done").text("pending")
