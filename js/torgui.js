@@ -36,7 +36,7 @@ function parseData(data)
     }
     // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
     // But we don't have it for movies.
-    else if (data['meta'].season) {
+    if (data['meta'].season) {
       title += " S" + data['meta']['season'] + "E" + data['meta']['episode']
     }
 
