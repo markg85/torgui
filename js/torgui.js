@@ -69,7 +69,17 @@ function parseData(data)
         var item = data[keys[col - 1]][i]
 
         if (item) {
-          td[col].innerHTML = `<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`;
+          var preBatch = "";
+          if (item.classification.codec == "x264")
+          {
+            preBatch = `<span class="badge-torgui x264">x264</span>`
+          }
+          else if (item.classification.codec == "x265")
+          {
+            preBatch = `<span class="badge-torgui x265">x265</span>`
+          }
+
+          td[col].innerHTML = `${preBatch}<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`;
         } else {
           td[col].textContent = ``;
         }

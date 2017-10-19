@@ -33,3 +33,23 @@ div#welcomeMessage
 {
   display: none;
 }
+
+span.badge-torgui
+{
+  border: 1px solid darkgrey;
+  font-size: 9px;
+  padding: 2px;
+  border-radius: 3px;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+span.badge-torgui.x264
+{
+  color: darkgrey;
+}
+
+span.badge-torgui.x265
+{
+  color: darkgreen;
+}
