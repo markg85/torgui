@@ -21,10 +21,7 @@ function welcomeMessageVersion() {
 }
 
 function isWelcomeMessageVersionRead() {
-  if (localStorage.welcomeMessageVersion < version) {
-    return false;
-  }
-  return true;
+  return !(localStorage.welcomeMessageVersion < version);
 }
 
 function parseData(data)
