@@ -1,3 +1,6 @@
+import {Spinner} from './spin.js';
+var spinner = new Spinner();
+
 var showWelcome = true
 
 var version = "0.1.0"
@@ -61,7 +64,8 @@ function parseData(data)
     var keys = ['1080p', '720p', 'sd']
 
     for (var i = 0; i < maxNum; i++) {
-      var td = rowTemplate.content.querySelectorAll("td");
+      var clonedNode = rowTemplate.content.cloneNode(true);
+      var td = clonedNode.querySelectorAll("td");
 
       td[0].textContent = (i + 1);
 
@@ -69,45 +73,40 @@ function parseData(data)
         var item = data[keys[col - 1]][i]
 
         if (item) {
-          var preBatch = "";
-          if (item.classification.codec == "x264")
-          {
-            preBatch = `<span class="badge-torgui x264">x264</span>`
-          }
-          else if (item.classification.codec == "x265")
-          {
-            preBatch = `<span class="badge-torgui x265">x265</span>`
-          }
 
-          td[col].innerHTML = `${preBatch}<a href="${item.url}">Download</a> (${item.classification.source}) ${item.sizeHumanReadable}`;
+          var cell = td[col];
+
+          // Get objects
+          //var badgeElem = cell.getElementsByClassName("badge-torgui");
+          var badgeElem = cell.getElementsByClassName("badge-torgui")[0];
+          var extraElem = cell.getElementsByClassName("extra")[0];
+          var download = cell.getElementsByTagName('a')[0];
+
+          // Set values
+          badgeElem.className += ` ${item.classification.codec}`;
+          extraElem.textContent = `(${item.classification.source}) ${item.sizeHumanReadable}`;
+          download.href = item.url;
         } else {
           td[col].textContent = ``;
         }
       }
 
-      var clone = document.importNode(rowTemplate.content, true);
-      bodyForRows.appendChild(clone);
+      bodyForRows.appendChild(clonedNode);
     }
 
     $("#showInfo").fadeIn()
   }
-  
-  $("#parsingStatus span").addClass("done").text("done");
-  $("#status").fadeOut()
- 
-  // Reset the status lines (remove done class and set the text back to pending).
-  $("sendRequestStatus span").removeClass("done").text("pending")
-  $("#responseStatus span").removeClass("done").text("pending")
-  $("#parsingStatus span").removeClass("done").text("pending")
 }
 
 var lastSearchQuery = "";
 
 function sendSearchRequest(query)
 {
+  spinner.spin(document.getElementById('center'));
   var searchQuery = query.trim();
   if (searchQuery == "")
   {
+    spinner.stop();
     alert("Empty query. Not doing anything.")
     return;
   }
@@ -125,7 +124,7 @@ function sendSearchRequest(query)
     searchQuery = searchQuery.substr(1);
   }
 
-  $("#status").fadeIn()
+  //$("#status").fadeIn()
   $("#showInfo").fadeOut()
 
   // Clear item information
@@ -141,22 +140,22 @@ function sendSearchRequest(query)
     .done(function(data) {
       //alert( "success" + data );
       console.log(data)
-      $("#responseStatus span").addClass("done").text("done");
+      //$("#responseStatus span").addClass("done").text("done");
       parseData(data);
+      spinner.stop();
     })
     .fail(function() {
+      spinner.stop();
       alert( "error" );
     });
 
-  $("#sendRequestStatus span").addClass("done").text("done");
+  //$("#sendRequestStatus span").addClass("done").text("done");
 }
 
 $( document ).ready(function() {
 
   fillInitialLocalStorage();
   console.log(localStorage.welcomeMessageVersion)
-
-  $('[data-toggle="tooltip"]').tooltip();
 
   $("#welcomeMessage").css("display", ((isWelcomeMessageVersionRead() == false) ? "block": "none"))
   $("#welcomeMessage > button").click(function(){
