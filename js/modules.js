@@ -133,7 +133,7 @@ function sendSearchRequest(query)
 
   console.log(searchQuery)
 //  $.ajax( "http://localhost:3020/search/" + searchQuery )
-  $.ajax( "http://tor.sc2.nl/search/" + searchQuery )
+  $.ajax( "https://tor.sc2.nl/search/" + searchQuery )
     .done(function(data) {
       //alert( "success" + data );
       console.log(data)
