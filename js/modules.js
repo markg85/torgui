@@ -24,24 +24,31 @@ function isWelcomeMessageVersionRead() {
   return !(localStorage.welcomeMessageVersion < version);
 }
 
+function zeroPadding(num, size = 2){
+  var st = num+"";
+  var sl = size - st.length - 1;
+  for (; sl >= 0; sl--) st = "0" + st;
+  return st;
+}
+
+
 function parseData(data)
 {
   var title = ""
   var image = ""
 
-  if (!data.error) {
-    if (data['meta'].image) {
-      image = data['meta']['image']
-      title = data['meta']['name']
-    }
+  if (!data.error && data.results.length > 0) {
+    image = data.meta.images.medium
+    title = data.meta.name
+
     // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
     // But we don't have it for movies.
-    if (data['meta'].season) {
-      title += " S" + data['meta']['season'] + "E" + data['meta']['episode']
+    if (data.results[0].season) {
+      title += " S" + zeroPadding(data.results[0].season) + "E" + zeroPadding(data.results[0].episode)
     }
 
     // Store the last search query and clear the input field.
-    lastSearchQuery = data['meta']['name'];
+    lastSearchQuery = $('#searchfield').val();
     $('#searchfield').val("");
 
 
@@ -52,7 +59,8 @@ function parseData(data)
     if (!data['720p']) data['720p'] = [];
     if (!data['sd']) data['sd'] = [];
 
-    var arrayLengths = [data['1080p'].length, data['720p'].length, data['sd'].length]
+    var torrents = data.results[0].torrents;
+    var arrayLengths = [torrents['1080p'].length, torrents['720p'].length, torrents['sd'].length]
     var maxNum = Math.max(...arrayLengths)
 
     var rowTemplate = document.getElementById('torrentEntry');
@@ -67,7 +75,7 @@ function parseData(data)
       td[0].textContent = (i + 1);
 
       for (var col = 1; col < 4; col++) {
-        var item = data[keys[col - 1]][i]
+        var item = torrents[keys[col - 1]][i]
 
         if (item) {
 
