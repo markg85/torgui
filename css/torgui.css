@@ -1,13 +1,10 @@
 html
 {
   margin: 10px;
+  font-size: 10pt;
 }
 
-div.container
-{
-  margin: 0 auto;
-  width: 80%;
-}
+@media (min-width:1025px) { .container-fluid { width: 80% !important;} }
 
 .badge.pstatus
 {
@@ -19,7 +16,14 @@ div.container
   background-color: #4CAF50;
 }
 
-div#status, div#showInfo
+a.disabled {
+  /* Make the disabled links grayish*/
+  color: gray;
+  /* And disable the pointer events */
+  pointer-events: none;
+}
+
+div#status, div#showInfo, div#moreOptions
 {
   display: none;
 }
@@ -44,6 +48,16 @@ span.badge-torgui
   vertical-align: middle;
 }
 
+span.bit8
+{
+  border-right: 3px solid #ceae9b;
+}
+
+span.bit10
+{
+  border-right: 3px solid #8fbb8f;
+}
+
 span.badge-torgui.x264:after
 {
   color: darkgrey;
@@ -61,4 +75,10 @@ div#center
   position: fixed;
   top: 50%;
   left: 50%;
+}
+
+.card-img-bottom {
+  width: 100%;
+  height: auto;
+  object-fit: scale-down;
 }
