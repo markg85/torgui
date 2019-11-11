@@ -1,0 +1,32 @@
+{
+  "name": "torgui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "start": "node_modules/.bin/webpack-dev-server --open",
+    "watch": "webpack --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markg85/torgui.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/markg85/torgui/issues"
+  },
+  "homepage": "https://github.com/markg85/torgui#readme",
+  "dependencies": {
+    "nkn-client": "^0.6.8",
+    "transmission-api": "0.0.1",
+    "ts-loader": "^6.0.4",
+    "typescript": "^3.5.3"
+  },
+  "devDependencies": {
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
+  }
+}
