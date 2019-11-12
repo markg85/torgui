@@ -20,7 +20,7 @@ function fillInitialLocalStorage() {
     useRemoteDownload = true;
     $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
-    nknClient = nkn({seed: window.localStorage.nknWalletSeedKey, seedRpcServerAddr: 'https://nknseed.sc2.nl/'});
+    nknClient = nkn({seed: window.localStorage.nknWalletSeedKey, seedRpcServerAddr: 'https://mainnet-rpc-node-0001.nkn.org/mainnet/api/wallet'});
 
     nknClient.on('connect', () => {
       console.log('Connection opened.');
