@@ -4,7 +4,14 @@ html
   font-size: 10pt;
 }
 
-@media (min-width:1025px) { .container-fluid { width: 80% !important;} }
+@media (min-width:1025px) {
+   .container-fluid { width: 80% !important;} 
+   .card-img-bottom {
+    width: 100%;
+    height: auto;
+    object-fit: scale-down;
+  }
+}
 
 .badge.pstatus
 {
@@ -77,8 +84,6 @@ div#center
   left: 50%;
 }
 
-.card-img-bottom {
-  width: 100%;
-  height: auto;
-  object-fit: scale-down;
+div#moreOptions {
+  display: none;
 }
