@@ -13,6 +13,11 @@ html
   }
 }
 
+.container-fluid {
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
 .badge.pstatus
 {
   width: 100px;
