@@ -87,9 +87,11 @@ async function downloadUrl(url) {
 function parseData(data) {
   var title = ""
   var image = ""
+  var imageLarge = ""
 
   if (!data.error && data.results.length > 0) {
     image = data.meta.images.medium
+    imageLarge = data.meta.images.original
     title = data.meta.name
 
     // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
@@ -104,6 +106,7 @@ function parseData(data) {
 
 
     $('.card-img-bottom').attr('src', image);
+    $('.card-img-bottom').attr('srcset', `${imageLarge} 2x`);
     $('.card-header').text(title)
 
     if (!data['1080p']) data['1080p'] = [];
@@ -188,6 +191,7 @@ function sendSearchRequest(query) {
 
   // Clear item information
   $('.card-img-bottom').attr('src', "");
+  $('.card-img-bottom').attr('srcset', "");
   $('.card-header').text("")
 
   // Clear all table rows
