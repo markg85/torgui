@@ -8,6 +8,8 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <!-- Font Awesome -->
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <link href="css/torgui.css" rel="stylesheet" />
 </head>
 
@@ -41,22 +43,16 @@
       <input type="text" id="searchfield" class="form-control" placeholder="Enter series name" autofocus />
       <div class="input-group-append">
         <button class="btn btn-primary" type="button" id="searchfieldSubmit">
-          Search
+          <i class="fa fa-search"></i>
         </button>
         <button class="btn btn-secondary" type="button" id="searchfieldRefresh">
-          Refresh
+          <i class="fa fa-refresh"></i>
+        </button>
+        <button class="btn btn-secondary" type="button" id="toggleMoreOptions">
+          <i class="fa fa-bars"></i>
         </button>
       </div>
     </div>
-
-    <div class="row mb-3">
-      <div class="col-12">
-        <button class="btn btn-primary float-right" type="button" id="toggleMoreOptions">
-          More options
-        </button>
-      </div>
-    </div>
-
     <div id="moreOptions" class="mb-3">
       <div class="alert alert-warning" role="alert">
         Do note, all traffic is encrypted! But because of this a private key needs to be known too (you need to encrypt a message with your private key and the server's public key). This is asymmetric encryption. 
