@@ -50,6 +50,10 @@ div#welcomeMessage
   display: none;
 }
 
+div#nknConnectionStatus{
+  transition: all 0.5s ease;
+}
+
 span.badge-torgui
 {
   border: 1px solid darkgrey;

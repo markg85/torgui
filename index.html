@@ -39,7 +39,7 @@
         <li><a href="https://github.com/markg85/torgui">TorGui</a></li>
       </ul>
     </div>
-    <div class="input-group mb-3">
+    <div class="input-group mb-3" id="inputBar">
       <input type="text" id="searchfield" class="form-control" placeholder="Enter series name" autofocus />
       <div class="input-group-append">
         <button class="btn btn-primary" type="button" id="searchfieldSubmit">
@@ -134,6 +134,11 @@
         <span class="extra"></span>
       </td>
     </tr>
+  </template>
+  <template id="nknConnectionStatusTemplate">
+    <button class="btn btn-danger" type="button" id="nknConnectionStatus" title="There is no connection with the NKN blockchain">
+        <i class="fa fa-chain-broken"></i>
+      </button>
   </template>
 </body>
 
