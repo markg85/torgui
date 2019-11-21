@@ -1,9 +1,6 @@
-import { Spinner } from './spin.js';
-
 const nkn = require('nkn-client/dist/nkn');
 const bs4Pop = require('./bs4.pop');
 
-const spinner = new Spinner();
 let nknClient = null;
 
 var showWelcome = true
@@ -177,13 +174,13 @@ function parseData(data) {
 var lastSearchQuery = "";
 
 function sendSearchRequest(query) {
-  spinner.spin(document.getElementById('center'));
   var searchQuery = query.trim();
   if (searchQuery == "") {
-    spinner.stop();
+    $("#center").hide();
     alert("Empty query. Not doing anything.")
     return;
   }
+  $("#center").show();
 
   // Adjust search query to be more generic.
   // If it contains a "S??E??" or starts with a "tt" then we pass it as is.
@@ -211,10 +208,10 @@ function sendSearchRequest(query) {
       console.log(data)
       //$("#responseStatus span").addClass("done").text("done");
       parseData(data);
-      spinner.stop();
+      $("#center").hide();
     })
     .fail(function () {
-      spinner.stop();
+      $("#center").hide();
       alert("error");
     });
 
