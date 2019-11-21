@@ -17,15 +17,15 @@ function fillInitialLocalStorage() {
   }
 
   if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
-    useRemoteDownload = true;
     $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
     nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
     var inputBar = document.querySelector('#inputBar > .input-group-append');
     var nknConnection = document.getElementById('nknConnectionStatusTemplate').content.cloneNode(true);
     inputBar.appendChild(nknConnection);
-
+    
     nknClient.on('connect', () => {
+      useRemoteDownload = true;
       $("#nknConnectionStatus").removeClass("btn-danger").addClass("btn-success");
       $("#nknConnectionStatus").attr("title", "NKN connected");
       $("#nknConnectionStatus > i").removeClass("fa-chain-broken").addClass("fa-link");
