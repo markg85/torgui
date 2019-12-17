@@ -1,3 +1,4 @@
+import './torgui.css';
 const nkn = require('nkn-client/dist/nkn');
 const bs4Pop = require('./bs4.pop');
 

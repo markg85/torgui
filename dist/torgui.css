@@ -1,0 +1,100 @@
+html
+{
+  margin: 10px;
+  font-size: 10pt;
+}
+
+@media (min-width:1025px) {
+   .container-fluid { width: 80% !important;} 
+   .card-img-bottom {
+    width: 100%;
+    height: auto;
+    object-fit: scale-down;
+  }
+}
+
+.container-fluid {
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+.badge.pstatus
+{
+  width: 100px;
+}
+
+.badge.done
+{
+  background-color: #4CAF50;
+}
+
+a.disabled {
+  /* Make the disabled links grayish*/
+  color: gray;
+  /* And disable the pointer events */
+  pointer-events: none;
+}
+
+div#status, div#showInfo, div#moreOptions
+{
+  display: none;
+}
+
+span.filesize
+{
+  float: right;
+}
+
+div#welcomeMessage
+{
+  display: none;
+}
+
+div#nknConnectionStatus{
+  transition: all 0.5s ease;
+}
+
+span.badge-torgui
+{
+  border: 1px solid darkgrey;
+  font-size: 9px;
+  padding: 2px;
+  border-radius: 3px;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+span.bit8
+{
+  border-right: 3px solid #ceae9b;
+}
+
+span.bit10
+{
+  border-right: 3px solid #8fbb8f;
+}
+
+span.badge-torgui.x264:after
+{
+  color: darkgrey;
+  content: "x264"
+}
+
+span.badge-torgui.x265:after
+{
+  color: darkgreen;
+  content: "x265"
+}
+
+div#center
+{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  display: none;
+}
+
+div#moreOptions {
+  display: none;
+}
+
