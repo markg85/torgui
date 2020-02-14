@@ -6,7 +6,7 @@ let nknClient = null;
 
 var showWelcome = true
 var useRemoteDownload = false
-const version = "0.2.0"
+const version = "0.3.0"
 let waitingForReply = []
 
 function fillInitialLocalStorage() {
@@ -19,8 +19,8 @@ function fillInitialLocalStorage() {
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
     nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
     var inputBar = document.querySelector('#inputBar > .input-group-append');
-    var nknConnection = document.getElementById('nknConnectionStatusTemplate').content.cloneNode(true);
-    inputBar.appendChild(nknConnection);
+    
+    inputBar.appendChild(document.getElementById('nknConnectionStatusTemplate').content.cloneNode(true));
     
     nknClient.on('connect', () => {
       useRemoteDownload = true;
@@ -227,6 +227,21 @@ async function updateMagnetDestination() {
   fillInitialLocalStorage();
 }
 
+function searchHandler(input) {
+  if (useRemoteDownload) {
+    if (/magnet:\?/.test(input)) {
+      downloadUrl(input)
+      return;
+    } else if (/^[a-z0-9]{40}$/i.test(input)) {
+      let magnetUrl = `magnet:?xt=urn:btih:${input}`
+      downloadUrl(magnetUrl)
+      return;
+    }
+  } else {
+    sendSearchRequest(input);
+  }
+}
+
 $(document).ready(function () {
 
   fillInitialLocalStorage();
@@ -238,11 +253,11 @@ $(document).ready(function () {
   });
 
   $('#searchfieldRefresh').click(function () {
-    sendSearchRequest(lastSearchQuery);
+    searchHandler(lastSearchQuery);
   });
 
   $('#searchfieldSubmit').click(function () {
-    sendSearchRequest($('#searchfield').val());
+    searchHandler($('#searchfield').val());
   });
 
   $('#saveMoreOptions').click(function () {
@@ -256,7 +271,7 @@ $(document).ready(function () {
   $('#searchfield').keypress(function (e) {
     if (e.which == 13)  // the enter key code
     {
-      sendSearchRequest($('#searchfield').val());
+      searchHandler($('#searchfield').val());
       return false;
     }
   });
