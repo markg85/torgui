@@ -237,9 +237,9 @@ function searchHandler(input) {
       downloadUrl(magnetUrl)
       return;
     }
-  } else {
-    sendSearchRequest(input);
   }
+  
+  sendSearchRequest(input);
 }
 
 $(document).ready(function () {
