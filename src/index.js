@@ -17,10 +17,18 @@ function fillInitialLocalStorage() {
   if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
     $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
-    nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
-    var inputBar = document.querySelector('#inputBar > .input-group-append');
+    if (nknClient === null) {
+      nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
+    }
     
-    inputBar.appendChild(document.getElementById('nknConnectionStatusTemplate').content.cloneNode(true));
+    if($('#nknConnectionStatus').length == 0) {
+      var inputBar = document.querySelector('#inputBar > .input-group-append');
+      inputBar.appendChild(document.getElementById('nknConnectionStatusTemplate').content.cloneNode(true));
+    } else {
+      $("#nknConnectionStatus").removeClass("btn-success").addClass("btn-danger");
+      nknClient.close();
+      nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
+    }
     
     nknClient.on('connect', () => {
       useRemoteDownload = true;
