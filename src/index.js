@@ -1,6 +1,7 @@
 import './torgui.css';
+import './bs4.pop.css'
 const nkn = require('nkn-client/dist/nkn');
-const bs4Pop = require('./bs4.pop');
+import bs4Pop from './bs4.pop';
 
 let nknClient = null;
 
@@ -36,9 +37,9 @@ function fillInitialLocalStorage() {
         if (index >= 0) {
           waitingForReply.splice(index, 1);
           if (obj.state === 'ALREADY_ADDED') {
-            bs4Pop.notice('Server is already handling this link!', {position: 'topright', type: 'warning'})
+            bs4Pop.notice('Server is already handling this link!', {position: 'center', type: 'warning'})
           } else if (obj.state === 'ADDED') {
-            bs4Pop.notice('Link added to server!', {position: 'topright', type: 'success'})
+            bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
           }
         }
       }
