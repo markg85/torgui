@@ -4,9 +4,8 @@ const bs4Pop = require('./bs4.pop');
 
 let nknClient = null;
 
-var showWelcome = true
 var useRemoteDownload = false
-const version = "0.3.0"
+const version = "0.4.0"
 let waitingForReply = []
 
 function fillInitialLocalStorage() {
@@ -242,6 +241,17 @@ function searchHandler(input) {
   sendSearchRequest(input);
 }
 
+function isMagnetSearch(input) {
+  if (useRemoteDownload) {
+    if (/magnet:\?/.test(input)) {
+      return true;
+    } else if (/^[a-z0-9]{40}$/i.test(input)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 $(document).ready(function () {
 
   fillInitialLocalStorage();
@@ -273,6 +283,14 @@ $(document).ready(function () {
     {
       searchHandler($('#searchfield').val());
       return false;
+    }
+  });
+
+  $('#searchfield').on('input',function (e) {
+    if (isMagnetSearch($('#searchfield').val())) {
+      $('#searchfieldSubmit i').removeClass('fa-search').addClass('fa-magnet')
+    } else {
+      $('#searchfieldSubmit i').removeClass('fa-magnet').addClass('fa-search')
     }
   });
 });
