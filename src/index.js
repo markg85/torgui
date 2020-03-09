@@ -5,18 +5,18 @@ import bs4Pop from './bs4.pop';
 
 let nknClient = null;
 
-var useRemoteDownload = false
-const version = "0.4.0"
-let waitingForReply = []
+let useRemoteDownload = false
+let nknSearchQueries = false
+let waitingForQuery = null
+let lastSearchQuery = ""
+let retryLastQueryEvent = new CustomEvent("retryLastQuery");
 
 function fillInitialLocalStorage() {
-  if (!window.localStorage.welcomeMessageVersion) {
-    window.localStorage.welcomeMessageVersion = "0.0.0"
-  }
-
   if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
     $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
+    $('#nknSearchQueries').prop('checked', JSON.parse(window.localStorage.nknSearchQueries))
+    
     if (nknClient === null) {
       nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
     }
@@ -32,6 +32,7 @@ function fillInitialLocalStorage() {
     
     nknClient.on('connect', () => {
       useRemoteDownload = true;
+      nknSearchQueries = JSON.parse(window.localStorage.nknSearchQueries);
       $("#nknConnectionStatus").removeClass("btn-danger").addClass("btn-success");
       $("#nknConnectionStatus").attr("title", "NKN connected");
       $("#nknConnectionStatus > i").removeClass("fa-chain-broken").addClass("fa-link");
@@ -41,31 +42,40 @@ function fillInitialLocalStorage() {
     nknClient.on('message', async (src, payload, payloadType, encrypt) => {
       if (src === window.localStorage.nknMagnetDestination) {
         let obj = JSON.parse(payload)
-        let index = waitingForReply.indexOf(obj.hash);
-        if (index >= 0) {
-          waitingForReply.splice(index, 1);
-          if (obj.state === 'ALREADY_ADDED') {
-            bs4Pop.notice('Server is already handling this link!', {position: 'center', type: 'warning'})
-          } else if (obj.state === 'ADDED') {
-            bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
-          }
+        if (obj.hash !== waitingForQuery) {
+          console.log(`Received results for something we were not waiting for anymore. Ignoring.`)
+          console.log(waitingForQuery)
+          console.log(obj)
+          return;
+        }
+
+        if (obj.state === 'INPROGRESS') {
+          $("#center").removeClass('spinnerInitial').addClass('spinnerData');
+        } else if (obj.state === 'RESULTS') {
+          parseData(obj.data);
+          $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
+          waitingForQuery = null;
+        } else if (obj.state === 'ALREADY_ADDED') {
+          bs4Pop.notice('Server is already handling this link!', {position: 'center', type: 'warning'})
+        } else if (obj.state === 'ADDED') {
+          bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
         }
       }
     });
+    document.addEventListener("retryLastQuery", async (e) => {
+      console.log('retryLastQuery...')
+      try {
+        await nknClient.send(
+          window.localStorage.nknMagnetDestination,
+          JSON.stringify({type: 'search', hash: waitingForQuery, query: lastSearchQuery}),
+          { encrypt: true } // Default is true as well, but just passing incase that changes
+        );
+      } catch (error) {
+        bs4Pop.notice('Failed to send message to NKN in 2 attempts. Please try again!', {position: 'center', type: 'danger', autoClose: 5000})
+        $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
+      }
+    });
   }
-}
-
-function welcomeMessageVersion() {
-  if (window.localStorage && window.localStorage.welcomeMessageVersion) {
-    window.localStorage.welcomeMessageVersion = version;
-    return window.localStorage.welcomeMessageVersion;
-  } else {
-    return version;
-  }
-}
-
-function isWelcomeMessageVersionRead() {
-  return !(window.localStorage.welcomeMessageVersion < version);
 }
 
 function zeroPadding(num, size = 2) {
@@ -85,11 +95,11 @@ async function digestMessage(message) {
 
 async function downloadUrl(url) {
   let hash = await digestMessage(url);
-  waitingForReply.push(hash);
+  waitingForQuery = hash
 
   nknClient.send(
     window.localStorage.nknMagnetDestination,
-    JSON.stringify({hash: hash, url: url}),
+    JSON.stringify({type: 'download', hash: hash, url: url}),
     { encrypt: true } // Default is true as well, but just passing incase that changes
   );
 
@@ -115,6 +125,7 @@ function parseData(data) {
     // Store the last search query and clear the input field.
     lastSearchQuery = $('#searchfield').val();
     $('#searchfield').val("");
+    waitingForQuery = null;
 
 
     $('.card-img-bottom').attr('src', image);
@@ -180,16 +191,15 @@ function parseData(data) {
   }
 }
 
-var lastSearchQuery = "";
-
-function sendSearchRequest(query) {
+async function sendSearchRequest(query) {
   var searchQuery = query.trim();
   if (searchQuery == "") {
-    $("#center").hide();
+    $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
     alert("Empty query. Not doing anything.")
     return;
   }
-  $("#center").show();
+
+  $("#center").show().addClass('spinnerInitial');
 
   // Adjust search query to be more generic.
   // If it contains a "S??E??" or starts with a "tt" then we pass it as is.
@@ -210,6 +220,24 @@ function sendSearchRequest(query) {
   $('#episodeLinks > tbody tr').remove();
 
   console.log(searchQuery)
+  lastSearchQuery = searchQuery
+
+  if (nknSearchQueries == true) {
+    // Sead the query to NKN.
+    let hash = await digestMessage(searchQuery);
+    waitingForQuery = hash;
+    try {
+      await nknClient.send(
+        window.localStorage.nknMagnetDestination,
+        JSON.stringify({type: 'search', hash: hash, query: searchQuery}),
+        { encrypt: true } // Default is true as well, but just passing incase that changes
+      );
+    } catch (error) {
+      document.dispatchEvent(retryLastQueryEvent);
+      console.log('Failed! Timeout, probably. Emitting retry signal.')
+    }
+    return;
+  }
   //  $.ajax( "http://localhost:3020/search/" + searchQuery )
   $.ajax("https://tor.sc2.nl/search/" + searchQuery)
     .done(function (data) {
@@ -217,10 +245,10 @@ function sendSearchRequest(query) {
       console.log(data)
       //$("#responseStatus span").addClass("done").text("done");
       parseData(data);
-      $("#center").hide();
+      $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
     })
     .fail(function () {
-      $("#center").hide();
+      $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
       alert("error");
     });
 
@@ -230,8 +258,10 @@ function sendSearchRequest(query) {
 async function updateMagnetDestination() {
   let nknMagnetDestination = $('#nknMagnetDestination').val();
   let nknWalletSeedKey = $('#nknWalletSeedKey').val();
+  let nknSearchQueries = $('#nknSearchQueries').is(":checked")
   window.localStorage.nknMagnetDestination = nknMagnetDestination;
   window.localStorage.nknWalletSeedKey = nknWalletSeedKey;
+  window.localStorage.nknSearchQueries = nknSearchQueries;
   fillInitialLocalStorage();
 }
 
@@ -264,12 +294,6 @@ function isMagnetSearch(input) {
 $(document).ready(function () {
 
   fillInitialLocalStorage();
-  console.log(window.localStorage.welcomeMessageVersion)
-
-  $("#welcomeMessage").css("display", ((isWelcomeMessageVersionRead() == false) ? "block" : "none"))
-  $("#welcomeMessage > button").click(function () {
-    welcomeMessageVersion();
-  });
 
   $('#searchfieldRefresh').click(function () {
     searchHandler(lastSearchQuery);

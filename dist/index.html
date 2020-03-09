@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>TorGui 0.3.0</title>
+  <title>TorGui 0.5.0</title>
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -15,24 +15,6 @@
 
 <body>
   <div class="container-fluid">
-    <div id="welcomeMessage" class="alert alert-info alert-dismissible" role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <b>Welcome!</b> <br />
-      New in version 0.3.0.<br />
-      If there is a NKN connection the following applies to the search field:
-      <ul>
-        <li>Passing in a magnet URL (magnet:?...) in the searchfield will directly send it to the chain. You will not see any search results.</li>
-        <li>Passing in just the info hash (sha-1 40 char hash) will be converted to a magnet URL and handled as if that was given.</li>
-      </ul>
-      Everything you see here is available on github if you want to run your
-      own instance or want to contibute.
-      <ul>
-        <li><a href="https://github.com/markg85/tor">Tor</a></li>
-        <li><a href="https://github.com/markg85/torgui">TorGui</a></li>
-      </ul>
-    </div>
     <div class="input-group mb-3" id="inputBar">
       <input type="text" id="searchfield" class="form-control" placeholder="Enter series name" autofocus />
       <div class="input-group-append">
@@ -63,6 +45,12 @@
       <label for="nknWalletSeedKey">NKN Your wallet SEED key</label>
       <div class="input-group mb-3">
         <input id="nknWalletSeedKey" type="text" class="form-control" placeholder="" />
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="nknSearchQueries">
+        <label class="form-check-label" for="nknSearchQueries">
+          Use NKN for search queries
+        </label>
       </div>
       <div class="row">
         <div class="col-12">
@@ -101,16 +89,10 @@
     </div>
   </div>
   <div id="center">
-    <div class="spinner-border" role="status">
-      <span class="sr-only">Loading...</span>
-    </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"
     integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-    crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
     crossorigin="anonymous"></script>
