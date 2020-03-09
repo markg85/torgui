@@ -15,6 +15,9 @@ function fillInitialLocalStorage() {
   if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
     $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
+    if (window.localStorage.nknSearchQueries === undefined) {
+      window.localStorage.nknSearchQueries = "false"
+    }
     $('#nknSearchQueries').prop('checked', JSON.parse(window.localStorage.nknSearchQueries))
     
     if (nknClient === null) {
