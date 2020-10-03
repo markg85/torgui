@@ -1,15 +1,25 @@
 import './torgui.css';
 import './bs4.pop.css'
-const nkn = require('nkn-client/dist/nkn');
+import nkn from 'nkn-sdk';
 import bs4Pop from './bs4.pop';
+
+// TODO!
+// Use Github Actions to "upload" directly to IPFS and pinata: https://github.com/aquiladev/ipfs-action/issues/1
+// And for that, somehow either update the torgui dns to use the new ipfs hash
+// ... or ... use IPNS but then i somehow need to make my node run name publish
 
 let nknClient = null;
 
 let useRemoteDownload = false
 let nknSearchQueries = false
-let waitingForQuery = null
+let waitingForResult = null
 let lastSearchQuery = ""
 let retryLastQueryEvent = new CustomEvent("retryLastQuery");
+
+function normalConnection() {
+  $("#nknConnectionStatus").removeClass("btn-warning").addClass("btn-success");
+  $("#nknConnectionStatus").attr("title", "NKN connected, a node responds to you.");
+}
 
 function fillInitialLocalStorage() {
   if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
@@ -21,7 +31,7 @@ function fillInitialLocalStorage() {
     $('#nknSearchQueries').prop('checked', JSON.parse(window.localStorage.nknSearchQueries))
     
     if (nknClient === null) {
-      nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
+      nknClient = new nkn.Client({seed: window.localStorage.nknWalletSeedKey});
     }
     
     if($('#nknConnectionStatus').length == 0) {
@@ -30,24 +40,35 @@ function fillInitialLocalStorage() {
     } else {
       $("#nknConnectionStatus").removeClass("btn-success").addClass("btn-danger");
       nknClient.close();
-      nknClient = nkn({seed: window.localStorage.nknWalletSeedKey});
+      nknClient = new nkn.Client({seed: window.localStorage.nknWalletSeedKey});
     }
     
-    nknClient.on('connect', () => {
+    nknClient.on('connect', async () => {
       useRemoteDownload = true;
       nknSearchQueries = JSON.parse(window.localStorage.nknSearchQueries);
-      $("#nknConnectionStatus").removeClass("btn-danger").addClass("btn-success");
-      $("#nknConnectionStatus").attr("title", "NKN connected");
+      $("#nknConnectionStatus").removeClass("btn-danger").addClass("btn-warning");
+      $("#nknConnectionStatus").attr("title", "NKN connected, no node responds to you yet though.");
       $("#nknConnectionStatus > i").removeClass("fa-chain-broken").addClass("fa-link");
+      waitingForResult = await digestMessage('hello');
+      try {
+        await nknClient.send(
+          window.localStorage.nknMagnetDestination,
+          JSON.stringify({type: 'hello', hash: waitingForResult}),
+          { encrypt: true } // Default is true as well, but just passing incase that changes
+        );
+      } catch (error) {
+        console.log(error)
+      }
+
       console.log('Connection opened.');
     });
     
-    nknClient.on('message', async (src, payload, payloadType, encrypt) => {
-      if (src === window.localStorage.nknMagnetDestination) {
-        let obj = JSON.parse(payload)
-        if (obj.hash !== waitingForQuery) {
+    nknClient.on('message', async (src) => {
+      if (src.src === window.localStorage.nknMagnetDestination) {
+        let obj = JSON.parse(src.payload)
+        if (obj.hash !== waitingForResult) {
           console.log(`Received results for something we were not waiting for anymore. Ignoring.`)
-          console.log(waitingForQuery)
+          console.log(waitingForResult)
           console.log(obj)
           return;
         }
@@ -57,20 +78,25 @@ function fillInitialLocalStorage() {
         } else if (obj.state === 'RESULTS') {
           parseData(obj.data);
           $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
-          waitingForQuery = null;
+          waitingForResult = null;
         } else if (obj.state === 'ALREADY_ADDED') {
           bs4Pop.notice('Server is already handling this link!', {position: 'center', type: 'warning'})
         } else if (obj.state === 'ADDED') {
           bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
+        } else if (obj.state === 'HELLO_RESPONSE') {
+          // Nothingto do (yet)
         }
+
+        normalConnection();
       }
     });
+
     document.addEventListener("retryLastQuery", async (e) => {
       console.log('retryLastQuery...')
       try {
         await nknClient.send(
           window.localStorage.nknMagnetDestination,
-          JSON.stringify({type: 'search', hash: waitingForQuery, query: lastSearchQuery}),
+          JSON.stringify({type: 'search', hash: waitingForResult, query: lastSearchQuery}),
           { encrypt: true } // Default is true as well, but just passing incase that changes
         );
       } catch (error) {
@@ -98,7 +124,7 @@ async function digestMessage(message) {
 
 async function downloadUrl(url) {
   let hash = await digestMessage(url);
-  waitingForQuery = hash
+  waitingForResult = hash
 
   nknClient.send(
     window.localStorage.nknMagnetDestination,
@@ -128,7 +154,7 @@ function parseData(data) {
     // Store the last search query and clear the input field.
     lastSearchQuery = $('#searchfield').val();
     $('#searchfield').val("");
-    waitingForQuery = null;
+    waitingForResult = null;
 
 
     $('.card-img-bottom').attr('src', image);
@@ -228,7 +254,7 @@ async function sendSearchRequest(query) {
   if (nknSearchQueries == true) {
     // Sead the query to NKN.
     let hash = await digestMessage(searchQuery);
-    waitingForQuery = hash;
+    waitingForResult = hash;
     try {
       await nknClient.send(
         window.localStorage.nknMagnetDestination,
