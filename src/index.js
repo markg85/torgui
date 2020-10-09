@@ -12,9 +12,11 @@ let nknClient = null;
 
 let useRemoteDownload = false
 let nknSearchQueries = false
-let waitingForResult = null
+let waitingForResult = []
 let lastSearchQuery = ""
 let retryLastQueryEvent = new CustomEvent("retryLastQuery");
+let nextSearchQuery = null
+let previousSearchQuery = null
 
 function normalConnection() {
   $("#nknConnectionStatus").removeClass("btn-warning").addClass("btn-success");
@@ -49,11 +51,11 @@ function fillInitialLocalStorage() {
       $("#nknConnectionStatus").removeClass("btn-danger").addClass("btn-warning");
       $("#nknConnectionStatus").attr("title", "NKN connected, no node responds to you yet though.");
       $("#nknConnectionStatus > i").removeClass("fa-chain-broken").addClass("fa-link");
-      waitingForResult = await digestMessage('hello');
+      waitingForResult.push(await digestMessage('hello'));
       try {
         await nknClient.send(
           window.localStorage.nknMagnetDestination,
-          JSON.stringify({type: 'hello', hash: waitingForResult}),
+          JSON.stringify({type: 'hello', hash: waitingForResult.slice(-1)[0]}),
           { encrypt: true } // Default is true as well, but just passing incase that changes
         );
       } catch (error) {
@@ -66,7 +68,7 @@ function fillInitialLocalStorage() {
     nknClient.on('message', async (src) => {
       if (src.src === window.localStorage.nknMagnetDestination) {
         let obj = JSON.parse(src.payload)
-        if (obj.hash !== waitingForResult) {
+        if (waitingForResult.includes(obj.hash) == false) {
           console.log(`Received results for something we were not waiting for anymore. Ignoring.`)
           console.log(waitingForResult)
           console.log(obj)
@@ -78,13 +80,25 @@ function fillInitialLocalStorage() {
         } else if (obj.state === 'RESULTS') {
           parseData(obj.data);
           $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
-          waitingForResult = null;
+          waitingForResult.filter(item => item !== obj.hash)
         } else if (obj.state === 'ALREADY_ADDED') {
           bs4Pop.notice('Server is already handling this link!', {position: 'center', type: 'warning'})
         } else if (obj.state === 'ADDED') {
           bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
         } else if (obj.state === 'HELLO_RESPONSE') {
-          // Nothingto do (yet)
+          // Nothing to do (yet)
+        } else if (obj.state === 'HAS_PREVIOUS') {
+          if (obj.data.aired === true) {
+            previousSearchQuery = `${obj.data.series} S${zeroPadding(obj.data.season)}E${zeroPadding(obj.data.episode)}`
+            $("#previousEpisode").attr("disabled", false);
+            $("#previousEpisode").prop('title', previousSearchQuery);
+          }
+        } else if (obj.state === 'HAS_NEXT') {
+          if (obj.data.aired === true) {
+            nextSearchQuery = `${obj.data.series} S${zeroPadding(obj.data.season)}E${zeroPadding(obj.data.episode)}`
+            $("#nextEpisode").attr("disabled", false);
+            $("#nextEpisode").prop('title', nextSearchQuery);
+          }
         }
 
         normalConnection();
@@ -94,9 +108,10 @@ function fillInitialLocalStorage() {
     document.addEventListener("retryLastQuery", async (e) => {
       console.log('retryLastQuery...')
       try {
+        waitingForResult.push(await digestMessage(lastSearchQuery));
         await nknClient.send(
           window.localStorage.nknMagnetDestination,
-          JSON.stringify({type: 'search', hash: waitingForResult, query: lastSearchQuery}),
+          JSON.stringify({type: 'search', hash: waitingForResult.slice(-1)[0], query: lastSearchQuery}),
           { encrypt: true } // Default is true as well, but just passing incase that changes
         );
       } catch (error) {
@@ -124,18 +139,18 @@ async function digestMessage(message) {
 
 async function downloadUrl(url) {
   let hash = await digestMessage(url);
-  waitingForResult = hash
+  waitingForResult.push(hash);
 
   nknClient.send(
     window.localStorage.nknMagnetDestination,
-    JSON.stringify({type: 'download', hash: hash, url: url}),
+    JSON.stringify({type: 'download', hash: waitingForResult.slice(-1)[0], url: url}),
     { encrypt: true } // Default is true as well, but just passing incase that changes
   );
 
   console.log(url)
 }
 
-function parseData(data) {
+async function parseData(data) {
   var title = ""
   var image = ""
   var imageLarge = ""
@@ -154,12 +169,11 @@ function parseData(data) {
     // Store the last search query and clear the input field.
     lastSearchQuery = $('#searchfield').val();
     $('#searchfield').val("");
-    waitingForResult = null;
-
+    waitingForResult = []
 
     $('.card-img-bottom').attr('src', image);
     $('.card-img-bottom').attr('srcset', `${imageLarge} 2x`);
-    $('.card-header').text(title)
+    $('.header-text').text(title)
 
     if (!data['1080p']) data['1080p'] = [];
     if (!data['720p']) data['720p'] = [];
@@ -217,6 +231,26 @@ function parseData(data) {
     }
 
     $("#showInfo").fadeIn()
+
+    let hasPrevious = `hasPrevious:${data.meta.imdb}:S${zeroPadding(data.results[0].season)}E${zeroPadding(data.results[0].episode)}`;
+    let hasNext = `hasNext:${data.meta.imdb}:S${zeroPadding(data.results[0].season)}E${zeroPadding(data.results[0].episode)}`;
+    
+    waitingForResult.push(await digestMessage(hasPrevious))
+
+    await nknClient.send(
+      window.localStorage.nknMagnetDestination,
+      JSON.stringify({type: 'hasPrevious', hash: waitingForResult.slice(-1)[0], data: hasPrevious}),
+      { encrypt: true } // Default is true as well, but just passing incase that changes
+    );
+
+    waitingForResult.push(await digestMessage(hasNext))
+
+    await nknClient.send(
+      window.localStorage.nknMagnetDestination,
+      JSON.stringify({type: 'hasNext', hash: waitingForResult.slice(-1)[0], data: hasNext}),
+      { encrypt: true } // Default is true as well, but just passing incase that changes
+    );
+
   }
 }
 
@@ -243,10 +277,18 @@ async function sendSearchRequest(query) {
   // Clear item information
   $('.card-img-bottom').attr('src', "");
   $('.card-img-bottom').attr('srcset', "");
-  $('.card-header').text("")
+  $('.header-text').text("")
 
   // Clear all table rows
   $('#episodeLinks > tbody tr').remove();
+
+  // Clear next/previous button values
+  previousSearchQuery = null
+  nextSearchQuery = null
+  $("#previousEpisode").attr("disabled", true);
+  $("#nextEpisode").attr("disabled", true);
+  $("#previousEpisode").prop('title', "");
+  $("#nextEpisode").prop('title', "");
 
   console.log(searchQuery)
   lastSearchQuery = searchQuery
@@ -254,7 +296,7 @@ async function sendSearchRequest(query) {
   if (nknSearchQueries == true) {
     // Sead the query to NKN.
     let hash = await digestMessage(searchQuery);
-    waitingForResult = hash;
+    waitingForResult.push(hash);
     try {
       await nknClient.send(
         window.localStorage.nknMagnetDestination,
@@ -269,11 +311,11 @@ async function sendSearchRequest(query) {
   }
   //  $.ajax( "http://localhost:3020/search/" + searchQuery )
   $.ajax("https://tor.sc2.nl/search/" + searchQuery)
-    .done(function (data) {
+    .done(async function (data) {
       //alert( "success" + data );
       console.log(data)
       //$("#responseStatus span").addClass("done").text("done");
-      parseData(data);
+      await parseData(data);
       $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
     })
     .fail(function () {
@@ -320,6 +362,18 @@ function isMagnetSearch(input) {
   return false;
 }
 
+function previousEpisode() {
+  if (previousSearchQuery !== null) {
+    searchHandler(previousSearchQuery)
+  }
+}
+
+function nextEpisode() {
+  if (nextSearchQuery !== null) {
+    searchHandler(nextSearchQuery)
+  }
+}
+
 $(document).ready(function () {
 
   fillInitialLocalStorage();
@@ -354,5 +408,13 @@ $(document).ready(function () {
     } else {
       $('#searchfieldSubmit i').removeClass('fa-magnet').addClass('fa-search')
     }
+  });
+
+  $('#previousEpisode').click(function () {
+    previousEpisode();
+  });
+
+  $('#nextEpisode').click(function () {
+    nextEpisode();
   });
 });

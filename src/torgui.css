@@ -127,3 +127,12 @@ div#moreOptions {
   border-right: 2px solid transparent;
   animation: spinner .6s linear infinite;
 }
+
+.border-transparent {
+  border-color: transparent;
+}
+
+.caption-bg {
+  background-color: rgba(0,0,0,.03);
+  border-bottom: 1px solid rgba(0,0,0,.125);
+}
