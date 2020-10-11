@@ -27,6 +27,7 @@ function fillInitialLocalStorage() {
   if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
     $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
     $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
+    $('#pogicalurl').val(window.localStorage.pogicalurl)
     if (window.localStorage.nknSearchQueries === undefined) {
       window.localStorage.nknSearchQueries = "false"
     }
@@ -86,7 +87,15 @@ function fillInitialLocalStorage() {
         } else if (obj.state === 'ADDED') {
           bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
         } else if (obj.state === 'HELLO_RESPONSE') {
-          // Nothing to do (yet)
+          // Ask the POG details
+          if (window.localStorage.pogicalurl !== "") {
+            waitingForResult.push(await digestMessage(window.localStorage.pogicalurl));
+            nknClient.send(
+              window.localStorage.nknMagnetDestination,
+              JSON.stringify({type: 'pog', hash: waitingForResult.slice(-1)[0], url: window.localStorage.pogicalurl}),
+              { encrypt: true } // Default is true as well, but just passing incase that changes
+            );
+          }
         } else if (obj.state === 'HAS_PREVIOUS') {
           if (obj.data.aired === true) {
             previousSearchQuery = `${obj.data.series} S${zeroPadding(obj.data.season)}E${zeroPadding(obj.data.episode)}`
@@ -99,6 +108,8 @@ function fillInitialLocalStorage() {
             $("#nextEpisode").attr("disabled", false);
             $("#nextEpisode").prop('title', nextSearchQuery);
           }
+        } else if (obj.state === 'POG_RESULTS') {
+          parsePogData(obj.data)
         }
 
         normalConnection();
@@ -254,7 +265,47 @@ async function parseData(data) {
   }
 }
 
+async function parsePogData(pog) {
+  var rowTemplate = document.getElementById('pogEntry');
+  var bodyForRows = document.getElementById('pogEntries').getElementsByTagName('tbody')[0];
+
+  const isToday = (someDate) => {
+    const today = new Date()
+    return someDate.getDate() == today.getDate() &&
+      someDate.getMonth() == today.getMonth() &&
+      someDate.getFullYear() == today.getFullYear()
+  }
+
+  let i = 1;
+  for (let entry of pog) {
+    var clonedNode = rowTemplate.content.cloneNode(true);
+    var td = clonedNode.querySelectorAll("td");
+
+    td[0].textContent = i++
+    if (isToday(new Date(entry.airdate))) {
+      td[1].textContent = 'Aired today!'
+    } else {
+      td[1].textContent = entry.fromNow
+    }
+
+    $(td[1]).prop('title', new Date(entry.airdate));
+
+    let search = td[2].getElementsByTagName('a')[0];
+    let seriesEpisode = entry.series + ` S${zeroPadding(entry.season)}E${zeroPadding(entry.episode)}`
+    search.innerHTML = seriesEpisode
+    search.onclick = async function () { searchHandler(seriesEpisode) };
+    search.href = `#`
+    
+    bodyForRows.appendChild(clonedNode);
+  }
+
+  $("#pogResults").fadeIn()
+}
+
 async function sendSearchRequest(query) {
+  // Resets the list of hashes to wait for. Any data that still arrives for us (with the hashes that were in here) will be lost.
+  waitingForResult = []
+
   var searchQuery = query.trim();
   if (searchQuery == "") {
     $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
@@ -273,6 +324,7 @@ async function sendSearchRequest(query) {
 
   //$("#status").fadeIn()
   $("#showInfo").fadeOut()
+  $("#pogResults").fadeOut()
 
   // Clear item information
   $('.card-img-bottom').attr('src', "");
@@ -330,9 +382,11 @@ async function updateMagnetDestination() {
   let nknMagnetDestination = $('#nknMagnetDestination').val();
   let nknWalletSeedKey = $('#nknWalletSeedKey').val();
   let nknSearchQueries = $('#nknSearchQueries').is(":checked")
+  let pogicalurl = $('#pogicalurl').val();
   window.localStorage.nknMagnetDestination = nknMagnetDestination;
   window.localStorage.nknWalletSeedKey = nknWalletSeedKey;
   window.localStorage.nknSearchQueries = nknSearchQueries;
+  window.localStorage.pogicalurl = pogicalurl;
   fillInitialLocalStorage();
 }
 

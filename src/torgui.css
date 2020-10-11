@@ -35,7 +35,7 @@ a.disabled {
   pointer-events: none;
 }
 
-div#status, div#showInfo, div#moreOptions
+div#status, div#showInfo, div#moreOptions, div#welcomeMessage, div#pogResults
 {
   display: none;
 }
@@ -43,11 +43,6 @@ div#status, div#showInfo, div#moreOptions
 span.filesize
 {
   float: right;
-}
-
-div#welcomeMessage
-{
-  display: none;
 }
 
 div#nknConnectionStatus{

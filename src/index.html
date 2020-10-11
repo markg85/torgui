@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>TorGui 0.6.0</title>
+  <title>TorGui 0.7.0</title>
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -46,6 +46,10 @@
       <div class="input-group mb-3">
         <input id="nknWalletSeedKey" type="text" class="form-control" placeholder="" />
       </div>
+      <label for="pogicalurl">Your POG iCal URL</label>
+      <div class="input-group mb-3">
+        <input id="pogicalurl" type="text" class="form-control" placeholder="" />
+      </div>
       <div class="form-check">
         <input class="form-check-input" type="checkbox" value="" id="nknSearchQueries">
         <label class="form-check-label" for="nknSearchQueries">
@@ -57,6 +61,28 @@
           <button class="btn btn-primary float-right" type="button" id="saveMoreOptions">
             Save
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pogResults">
+      <div class="row">
+        <div class="col">
+          <h2>Your upcoming episodes</h2>
+        </div>
+      </div>
+      <div class="row">
+        <div class="table-responsive col-lg-12">
+          <table class="table" id="pogEntries">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Airdate</th>
+                <th>Name</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -115,6 +141,18 @@
       </td>
     </tr>
   </template>
+
+  <template id="pogEntry">
+    <tr>
+      <td></td>
+      <td>
+      </td>
+      <td>
+        <a></a>
+      </td>
+    </tr>
+  </template>
+
   <template id="nknConnectionStatusTemplate">
     <button class="btn btn-danger" type="button" id="nknConnectionStatus" title="There is no connection with the NKN blockchain">
         <i class="fa fa-chain-broken"></i>
