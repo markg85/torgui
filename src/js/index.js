@@ -1,8 +1,3 @@
-import './torgui.css';
-import './bs4.pop.css'
-import nkn from 'nkn-sdk';
-import bs4Pop from './bs4.pop';
-
 // TODO!
 // Use Github Actions to "upload" directly to IPFS and pinata: https://github.com/aquiladev/ipfs-action/issues/1
 // And for that, somehow either update the torgui dns to use the new ipfs hash
@@ -162,6 +157,9 @@ async function downloadUrl(url) {
 }
 
 async function parseData(data) {
+  // Clear all table rows
+  $('#episodeLinks > tbody tr').remove();
+  
   var title = ""
   var image = ""
   var imageLarge = ""
@@ -266,6 +264,9 @@ async function parseData(data) {
 }
 
 async function parsePogData(pog) {
+  // Clear all table rows
+  $('#pogEntries > tbody tr').remove();
+  
   var rowTemplate = document.getElementById('pogEntry');
   var bodyForRows = document.getElementById('pogEntries').getElementsByTagName('tbody')[0];
 
@@ -428,7 +429,7 @@ function nextEpisode() {
   }
 }
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded",function(){
 
   fillInitialLocalStorage();
 
