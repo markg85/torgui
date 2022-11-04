@@ -1,14 +1,14 @@
-// TODO!
-// Use Github Actions to "upload" directly to IPFS and pinata: https://github.com/aquiladev/ipfs-action/issues/1
-// And for that, somehow either update the torgui dns to use the new ipfs hash
-// ... or ... use IPNS but then i somehow need to make my node run name publish
-
 let lastSearchQuery = ""
 let nextSearchQuery = null
 let previousSearchQuery = null
 
-function fillInitialLocalStorage() {
+async function fillInitialLocalStorage() {
+  $('#pogicalurl').val(window.localStorage.pogicalurl)
 
+  if (window.localStorage.pogicalurl !== "") {
+    let pog = new Pog()
+    parsePogData(await pog.handle(window.localStorage.pogicalurl))
+  }
 }
 
 function zeroPadding(num, size = 2) {
@@ -226,6 +226,10 @@ async function sendSearchRequest(query) {
 async function updateMagnetDestination() {
   let pogicalurl = $('#pogicalurl').val();
   window.localStorage.pogicalurl = pogicalurl;
+
+  console.log(`ssss`)
+  console.log(window.localStorage.pogicalurl)
+
   fillInitialLocalStorage();
 }
 
