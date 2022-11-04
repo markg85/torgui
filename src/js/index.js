@@ -4,7 +4,6 @@
 // ... or ... use IPNS but then i somehow need to make my node run name publish
 
 let lastSearchQuery = ""
-let retryLastQueryEvent = new CustomEvent("retryLastQuery");
 let nextSearchQuery = null
 let previousSearchQuery = null
 
