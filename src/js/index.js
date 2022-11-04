@@ -3,129 +3,13 @@
 // And for that, somehow either update the torgui dns to use the new ipfs hash
 // ... or ... use IPNS but then i somehow need to make my node run name publish
 
-let nknClient = null;
-
-let useRemoteDownload = false
-let nknSearchQueries = false
-let waitingForResult = []
 let lastSearchQuery = ""
 let retryLastQueryEvent = new CustomEvent("retryLastQuery");
 let nextSearchQuery = null
 let previousSearchQuery = null
 
-function normalConnection() {
-  $("#nknConnectionStatus").removeClass("btn-warning").addClass("btn-success");
-  $("#nknConnectionStatus").attr("title", "NKN connected, a node responds to you.");
-}
-
 function fillInitialLocalStorage() {
-  if (window.localStorage.nknMagnetDestination && window.localStorage.nknWalletSeedKey) {
-    $('#nknMagnetDestination').val(window.localStorage.nknMagnetDestination)
-    $('#nknWalletSeedKey').val(window.localStorage.nknWalletSeedKey)
-    $('#pogicalurl').val(window.localStorage.pogicalurl)
-    if (window.localStorage.nknSearchQueries === undefined) {
-      window.localStorage.nknSearchQueries = "false"
-    }
-    $('#nknSearchQueries').prop('checked', JSON.parse(window.localStorage.nknSearchQueries))
-    
-    if (nknClient === null) {
-      nknClient = new nkn.Client({seed: window.localStorage.nknWalletSeedKey});
-    }
-    
-    if($('#nknConnectionStatus').length == 0) {
-      var inputBar = document.querySelector('#inputBar > .input-group-append');
-      inputBar.appendChild(document.getElementById('nknConnectionStatusTemplate').content.cloneNode(true));
-    } else {
-      $("#nknConnectionStatus").removeClass("btn-success").addClass("btn-danger");
-      nknClient.close();
-      nknClient = new nkn.Client({seed: window.localStorage.nknWalletSeedKey});
-    }
-    
-    nknClient.on('connect', async () => {
-      useRemoteDownload = true;
-      nknSearchQueries = JSON.parse(window.localStorage.nknSearchQueries);
-      $("#nknConnectionStatus").removeClass("btn-danger").addClass("btn-warning");
-      $("#nknConnectionStatus").attr("title", "NKN connected, no node responds to you yet though.");
-      $("#nknConnectionStatus > i").removeClass("fa-chain-broken").addClass("fa-link");
-      waitingForResult.push(await digestMessage('hello'));
-      try {
-        await nknClient.send(
-          window.localStorage.nknMagnetDestination,
-          JSON.stringify({type: 'hello', hash: waitingForResult.slice(-1)[0]}),
-          { encrypt: true } // Default is true as well, but just passing incase that changes
-        );
-      } catch (error) {
-        console.log(error)
-      }
 
-      console.log('Connection opened.');
-    });
-    
-    nknClient.on('message', async (src) => {
-      if (src.src === window.localStorage.nknMagnetDestination) {
-        let obj = JSON.parse(src.payload)
-        if (waitingForResult.includes(obj.hash) == false) {
-          console.log(`Received results for something we were not waiting for anymore. Ignoring.`)
-          console.log(waitingForResult)
-          console.log(obj)
-          return;
-        }
-
-        if (obj.state === 'INPROGRESS') {
-          $("#center").removeClass('spinnerInitial').addClass('spinnerData');
-        } else if (obj.state === 'RESULTS') {
-          parseData(obj.data);
-          $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
-          waitingForResult.filter(item => item !== obj.hash)
-        } else if (obj.state === 'ALREADY_ADDED') {
-          bs4Pop.notice('Server is already handling this link!', {position: 'center', type: 'warning'})
-        } else if (obj.state === 'ADDED') {
-          bs4Pop.notice('Link added to server!', {position: 'center', type: 'success'})
-        } else if (obj.state === 'HELLO_RESPONSE') {
-          // Ask the POG details
-          if (window.localStorage.pogicalurl !== "") {
-            waitingForResult.push(await digestMessage(window.localStorage.pogicalurl));
-            nknClient.send(
-              window.localStorage.nknMagnetDestination,
-              JSON.stringify({type: 'pog', hash: waitingForResult.slice(-1)[0], url: window.localStorage.pogicalurl}),
-              { encrypt: true } // Default is true as well, but just passing incase that changes
-            );
-          }
-        } else if (obj.state === 'HAS_PREVIOUS') {
-          if (obj.data.aired === true) {
-            previousSearchQuery = `${obj.data.series} S${zeroPadding(obj.data.season)}E${zeroPadding(obj.data.episode)}`
-            $("#previousEpisode").attr("disabled", false);
-            $("#previousEpisode").prop('title', previousSearchQuery);
-          }
-        } else if (obj.state === 'HAS_NEXT') {
-          if (obj.data.aired === true) {
-            nextSearchQuery = `${obj.data.series} S${zeroPadding(obj.data.season)}E${zeroPadding(obj.data.episode)}`
-            $("#nextEpisode").attr("disabled", false);
-            $("#nextEpisode").prop('title', nextSearchQuery);
-          }
-        } else if (obj.state === 'POG_RESULTS') {
-          parsePogData(obj.data)
-        }
-
-        normalConnection();
-      }
-    });
-
-    document.addEventListener("retryLastQuery", async (e) => {
-      console.log('retryLastQuery...')
-      try {
-        waitingForResult.push(await digestMessage(lastSearchQuery));
-        await nknClient.send(
-          window.localStorage.nknMagnetDestination,
-          JSON.stringify({type: 'search', hash: waitingForResult.slice(-1)[0], query: lastSearchQuery}),
-          { encrypt: true } // Default is true as well, but just passing incase that changes
-        );
-      } catch (error) {
-        bs4Pop.notice('Failed to send message to NKN in 2 attempts. Please try again!', {position: 'center', type: 'danger', autoClose: 5000})
-        $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
-      }
-    });
-  }
 }
 
 function zeroPadding(num, size = 2) {
@@ -133,27 +17,6 @@ function zeroPadding(num, size = 2) {
   var sl = size - st.length - 1;
   for (; sl >= 0; sl--) st = "0" + st;
   return st;
-}
-
-async function digestMessage(message) {
-  const msgUint8 = new TextEncoder().encode(message);                           // encode as (utf-8) Uint8Array
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);           // hash the message
-  const hashArray = Array.from(new Uint8Array(hashBuffer));                     // convert buffer to byte array
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); // convert bytes to hex string
-  return hashHex;
-}
-
-async function downloadUrl(url) {
-  let hash = await digestMessage(url);
-  waitingForResult.push(hash);
-
-  nknClient.send(
-    window.localStorage.nknMagnetDestination,
-    JSON.stringify({type: 'download', hash: waitingForResult.slice(-1)[0], url: url}),
-    { encrypt: true } // Default is true as well, but just passing incase that changes
-  );
-
-  console.log(url)
 }
 
 async function parseData(data) {
@@ -165,9 +28,11 @@ async function parseData(data) {
   var imageLarge = ""
 
   if (!data.error && data.results.length > 0) {
-    image = data.meta.images.medium
-    imageLarge = data.meta.images.original
-    title = data.meta.name
+    if (data?.meta) {
+      image = data.meta.images.medium
+      imageLarge = data.meta.images.original
+      title = data.meta.name
+    }
 
     // Only add the season episode tag (like S01E01) if we have a season. We also have an episode in that case.
     // But we don't have it for movies.
@@ -184,18 +49,13 @@ async function parseData(data) {
     $('.card-img-bottom').attr('srcset', `${imageLarge} 2x`);
     $('.header-text').text(title)
 
-    if (!data['1080p']) data['1080p'] = [];
-    if (!data['720p']) data['720p'] = [];
-    if (!data['sd']) data['sd'] = [];
-
     var torrents = data.results[0].torrents;
-    var arrayLengths = [torrents['1080p'].length, torrents['720p'].length, torrents['sd'].length]
-    var maxNum = Math.max(...arrayLengths)
+    var maxNum = Math.max(...(Object.values(torrents).map(a => a.length)))
 
     var rowTemplate = document.getElementById('torrentEntry');
     var bodyForRows = document.getElementById('episodeLinks').getElementsByTagName('tbody')[0];
 
-    var keys = ['1080p', '720p', 'sd']
+    var keys = Object.keys(torrents)
 
     for (var i = 0; i < maxNum; i++) {
       var clonedNode = rowTemplate.content.cloneNode(true);
@@ -203,11 +63,11 @@ async function parseData(data) {
 
       td[0].textContent = (i + 1);
 
-      for (var col = 1; col < 4; col++) {
-        let item = torrents[keys[col - 1]][i]
+      for (let [col, value] of Object.entries(keys)) {
+        let item = torrents[value][i]
+        col = 1 + parseInt(col);
 
         if (item) {
-
           var cell = td[col];
 
           // Get objects
@@ -220,15 +80,7 @@ async function parseData(data) {
           // Set values
           badgeElem.className += ` ${item.classification.codec}` + bitAddition;
           extraElem.textContent = `(${item.classification.source}) ${item.sizeHumanReadable}`;
-          if (useRemoteDownload) {
-            download.innerHTML = "Send"
-            download.onclick = async function () { downloadUrl(item.url) };
-            download.href = `#`
-          }
-          else {
-            download.href = item.url;
-          }
-
+          download.href = item.url;
           download.title = item.name
 
         } else {
@@ -239,27 +91,34 @@ async function parseData(data) {
       bodyForRows.appendChild(clonedNode);
     }
 
+    // Specially crafted function to hide the empty columns. With the exception of the number column.
+    hideEmptyCols($("#showInfo"), 2);
+
+    // Now the table is done. Show it.
     $("#showInfo").fadeIn()
+  }
+}
 
-    let hasPrevious = `hasPrevious:${data.meta.imdb}:S${zeroPadding(data.results[0].season)}E${zeroPadding(data.results[0].episode)}`;
-    let hasNext = `hasNext:${data.meta.imdb}:S${zeroPadding(data.results[0].season)}E${zeroPadding(data.results[0].episode)}`;
-    
-    waitingForResult.push(await digestMessage(hasPrevious))
-
-    await nknClient.send(
-      window.localStorage.nknMagnetDestination,
-      JSON.stringify({type: 'hasPrevious', hash: waitingForResult.slice(-1)[0], data: hasPrevious}),
-      { encrypt: true } // Default is true as well, but just passing incase that changes
-    );
-
-    waitingForResult.push(await digestMessage(hasNext))
-
-    await nknClient.send(
-      window.localStorage.nknMagnetDestination,
-      JSON.stringify({type: 'hasNext', hash: waitingForResult.slice(-1)[0], data: hasNext}),
-      { encrypt: true } // Default is true as well, but just passing incase that changes
-    );
-
+function hideEmptyCols(table, columnOffset = 1) {
+  //count # of columns
+  var numCols = $("th", table).length;
+  for ( var i=columnOffset; i<=numCols; i++ ) {
+      var empty = true;
+      //grab all the <td>'s of the column at i
+      $("td:nth-child(" + i + ")", table).each(function(index, el) {
+          //check if the <span> of this <td> is empty
+          if ( $("span", el).text() != "" ) {
+              empty = false;
+              return false; //break out of each() early
+          }
+      });
+      if ( empty ) {
+          $("td:nth-child(" + i + ")", table).hide();
+          $("th:nth-child(" + i + ")", table).hide();
+      } else {
+          $("td:nth-child(" + i + ")", table).show();
+          $("th:nth-child(" + i + ")", table).show();
+      }
   }
 }
 
@@ -304,9 +163,6 @@ async function parsePogData(pog) {
 }
 
 async function sendSearchRequest(query) {
-  // Resets the list of hashes to wait for. Any data that still arrives for us (with the hashes that were in here) will be lost.
-  waitingForResult = []
-
   var searchQuery = query.trim();
   if (searchQuery == "") {
     $("#center").hide().removeClass('spinnerInitial').removeClass('spinnerData');
@@ -319,8 +175,13 @@ async function sendSearchRequest(query) {
   // Adjust search query to be more generic.
   // If it contains a "S??E??" or starts with a "tt" then we pass it as is.
   // If not (this if body) then prefix it with "latest:"
-  if (!searchQuery.match(/(.+) s([0-9]{1,2})e([0-9]{1,2})/i) && !searchQuery.startsWith("tt") && !searchQuery.startsWith("imdb:") && !searchQuery.startsWith("latest:")) {
+  if (!searchQuery.match(/(.+) s([0-9]{1,2})e([0-9]{1,2})/i) && !searchQuery.startsWith("tt") && !searchQuery.startsWith("!") && !searchQuery.startsWith("imdb:") && !searchQuery.startsWith("latest:")) {
     searchQuery = "latest:" + searchQuery
+  }
+
+  // We want a wildcard search.
+  if (searchQuery.startsWith("!")) {
+    searchQuery = searchQuery.slice(1).trim()
   }
 
   //$("#status").fadeIn()
@@ -346,22 +207,6 @@ async function sendSearchRequest(query) {
   console.log(searchQuery)
   lastSearchQuery = searchQuery
 
-  if (nknSearchQueries == true) {
-    // Sead the query to NKN.
-    let hash = await digestMessage(searchQuery);
-    waitingForResult.push(hash);
-    try {
-      await nknClient.send(
-        window.localStorage.nknMagnetDestination,
-        JSON.stringify({type: 'search', hash: hash, query: searchQuery}),
-        { encrypt: true } // Default is true as well, but just passing incase that changes
-      );
-    } catch (error) {
-      document.dispatchEvent(retryLastQueryEvent);
-      console.log('Failed! Timeout, probably. Emitting retry signal.')
-    }
-    return;
-  }
   //  $.ajax( "http://localhost:3020/search/" + searchQuery )
   $.ajax("https://tor.sc2.nl/search/" + searchQuery)
     .done(async function (data) {
@@ -380,40 +225,16 @@ async function sendSearchRequest(query) {
 }
 
 async function updateMagnetDestination() {
-  let nknMagnetDestination = $('#nknMagnetDestination').val();
-  let nknWalletSeedKey = $('#nknWalletSeedKey').val();
-  let nknSearchQueries = $('#nknSearchQueries').is(":checked")
   let pogicalurl = $('#pogicalurl').val();
-  window.localStorage.nknMagnetDestination = nknMagnetDestination;
-  window.localStorage.nknWalletSeedKey = nknWalletSeedKey;
-  window.localStorage.nknSearchQueries = nknSearchQueries;
   window.localStorage.pogicalurl = pogicalurl;
   fillInitialLocalStorage();
 }
 
 function searchHandler(input) {
-  if (useRemoteDownload) {
-    if (/magnet:\?/.test(input)) {
-      downloadUrl(input)
-      return;
-    } else if (/^[a-z0-9]{40}$/i.test(input)) {
-      let magnetUrl = `magnet:?xt=urn:btih:${input}`
-      downloadUrl(magnetUrl)
-      return;
-    }
-  }
-  
   sendSearchRequest(input);
 }
 
 function isMagnetSearch(input) {
-  if (useRemoteDownload) {
-    if (/magnet:\?/.test(input)) {
-      return true;
-    } else if (/^[a-z0-9]{40}$/i.test(input)) {
-      return true;
-    }
-  }
   return false;
 }
 
