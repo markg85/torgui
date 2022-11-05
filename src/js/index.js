@@ -5,7 +5,7 @@ let previousSearchQuery = null
 async function fillInitialLocalStorage() {
   $('#pogicalurl').val(window.localStorage.pogicalurl)
 
-  if (window.localStorage.pogicalurl !== "") {
+  if (window.localStorage.pogicalurl && window.localStorage.pogicalurl !== "") {
     let pog = new Pog()
     parsePogData(await pog.handle(window.localStorage.pogicalurl))
   }
