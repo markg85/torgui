@@ -2,7 +2,7 @@ moment().format();
 
 class Pog {
     async handle(url) {
-        const data = await fetch(`https://proxy.cors.sh/${url}`);
+        const data = await fetch(`https://ihatecors.sc2.nl/${url}`);
         const icalData = ical.parseICS(await data.text())
         // const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
