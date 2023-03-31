@@ -69,16 +69,38 @@ span.bit10
   border-right: 3px solid #8fbb8f;
 }
 
+span.hdr
+{
+  background-image: linear-gradient( 109.6deg,  rgba(255,115,68,1) 11.2%, rgba(244,255,32,1) 100.6% );
+  outline: 1px solid #fff;
+  outline-offset: -2px;
+}
+
+span.dv
+{
+  background-image: linear-gradient( 69.7deg,  rgba(244,37,243,1) 1.4%, rgba(244,87,1,1) 36.2%, rgba(255,204,37,1) 72.2%, rgba(20,196,6,1) 113% );
+  outline: 1px solid #fff;
+  outline-offset: -2px;
+}
+
 span.badge-torgui.x264:after
 {
   color: darkgrey;
-  content: "x264"
+  content: "x264";
 }
 
 span.badge-torgui.x265:after
 {
   color: darkgreen;
-  content: "x265"
+  content: "x265";
+}
+
+span.badge-torgui.x265.hdr:after, span.badge-torgui.x265.dv:after
+{
+  color: white;
+  content: "x265";
+  font-weight: bold;
+  text-shadow: #000000 1px 0px;
 }
 
 div#center

@@ -74,10 +74,10 @@ async function parseData(data) {
           var badgeElem = cell.getElementsByClassName("badge-torgui")[0];
           var extraElem = cell.getElementsByClassName("extra")[0];
           var download = cell.getElementsByTagName('a')[0];
-          var bitAddition = ` bit${item.classification.bitdepth}`
+          var bitAddition = `bit${item.classification.bitdepth}`
 
           // Set values
-          badgeElem.className += ` ${item.classification.codec}` + bitAddition;
+          badgeElem.className += ` ${item.classification.codec}` + ` ` + ((item.classification.hdrtype != `sdr`) ? item.classification.hdrtype : bitAddition);
           extraElem.textContent = `(${item.classification.source}) ${item.sizeHumanReadable}`;
           download.href = item.url;
           download.title = item.name
